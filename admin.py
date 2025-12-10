@@ -1,55 +1,47 @@
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import User, TeacherGroupAccess, News, Contact
+from .models import Student, Teacher, Curriculum
 
 
-@admin.register(User)
-class UserAdmin(BaseUserAdmin):
-    list_display = ['username', 'get_full_name', 'email', 'role', 'is_staff']
-    list_filter = ['role', 'is_staff', 'is_active']
-    search_fields = ['username', 'first_name', 'last_name', 'email']
+@admin.register(Student)
+class StudentAdmin(admin.ModelAdmin):
+    list_display = ['get_last_name', 'get_first_name', 'group', 'record_book_number', 'financing_type']
+    list_filter = ['group', 'financing_type']
+    search_fields = ['user__last_name', 'user__first_name', 'record_book_number', 'group']
+    ordering = ['group', 'user__last_name']
     
-    fieldsets = BaseUserAdmin.fieldsets + (
-        ('Дополнительная информация', {
-            'fields': ('role', 'middle_name', 'phone', 'photo', 'birth_date', 'address')
-        }),
-    )
+    def get_last_name(self, obj):
+        return obj.user.last_name
+    get_last_name.short_description = 'Фамилия'
+    get_last_name.admin_order_field = 'user__last_name'
     
-    add_fieldsets = BaseUserAdmin.add_fieldsets + (
-        ('Дополнительная информация', {
-            'fields': ('role', 'first_name', 'last_name', 'middle_name', 'email')
-        }),
-    )
+    def get_first_name(self, obj):
+        return obj.user.first_name
+    get_first_name.short_description = 'Имя'
+    get_first_name.admin_order_field = 'user__first_name'
 
 
-@admin.register(TeacherGroupAccess)
-class TeacherGroupAccessAdmin(admin.ModelAdmin):
-    list_display = ['teacher', 'group', 'subject', 'can_edit']
-    list_filter = ['group', 'can_edit']
-    search_fields = ['teacher__username', 'teacher__last_name', 'group', 'subject']
+@admin.register(Teacher)
+class TeacherAdmin(admin.ModelAdmin):
+    list_display = ['get_last_name', 'get_first_name', 'position', 'department']
+    list_filter = ['position', 'department']
+    search_fields = ['user__last_name', 'user__first_name', 'department']
+    ordering = ['user__last_name']
     
-    def formfield_for_foreignkey(self, db_field, request, **kwargs):
-        if db_field.name == "teacher":
-            kwargs["queryset"] = User.objects.filter(role='teacher')
-        return super().formfield_for_foreignkey(db_field, request, **kwargs)
+    def get_last_name(self, obj):
+        return obj.user.last_name
+    get_last_name.short_description = 'Фамилия'
+    get_last_name.admin_order_field = 'user__last_name'
+    
+    def get_first_name(self, obj):
+        return obj.user.first_name
+    get_first_name.short_description = 'Имя'
+    get_first_name.admin_order_field = 'user__first_name'
 
 
-@admin.register(News)
-class NewsAdmin(admin.ModelAdmin):
-    list_display = ['title', 'author', 'is_important', 'created_at']
-    list_filter = ['is_important', 'created_at']
-    search_fields = ['title', 'content']
+@admin.register(Curriculum)
+class CurriculumAdmin(admin.ModelAdmin):
+    list_display = ['name', 'specialty', 'semester', 'group', 'created_at']
+    list_filter = ['semester', 'specialty', 'group']
+    search_fields = ['name', 'specialty', 'group']
+    ordering = ['specialty', 'semester']
     readonly_fields = ['created_at', 'updated_at']
-    
-    def save_model(self, request, obj, form, change):
-        if not change:
-            obj.author = request.user
-        super().save_model(request, obj, form, change)
-
-
-@admin.register(Contact)
-class ContactAdmin(admin.ModelAdmin):
-    list_display = ['title', 'phone', 'email', 'order', 'is_active']
-    list_filter = ['is_active']
-    search_fields = ['title', 'phone', 'email']
-    ordering = ['order', 'title']
